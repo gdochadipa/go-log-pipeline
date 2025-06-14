@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+//protoc --proto_path=proto --go_out=proto --go-grpc_out=proto proto/log.proto
+package pb;
+
+option go_package = "/pb";
+
+
+message LogRequest {
+    string serviceName = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    string level = 3;
+    string message = 4;
+    map<string, string> data = 5;
+}
+
+message LogResponse {
+  bool success = 1;
+}
+
+service LogAggregator {
+    rpc StreamLogs(stream LogRequest) returns(LogResponse);
+}
