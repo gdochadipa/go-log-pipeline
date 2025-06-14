@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ochadipa/log_pipeline/internal"
+	"github.com/ochadipa/log_pipeline/processor"
 	"github.com/ochadipa/log_pipeline/storage"
 )
 
@@ -23,8 +24,9 @@ func main() {
 		fmt.Sprintln("Database load failed %v", err)
 	}
 
+	workerPool := processor.NewWorkerPool(db, 3, 1000)
 
-	repo = internal.NewRepository(db)
+	repo = internal.NewRepository(workerPool)
 	defer db.Close()
 
 	log.Println("Listening on port 8080...")

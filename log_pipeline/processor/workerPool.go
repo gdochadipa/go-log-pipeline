@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
 	"time"
@@ -10,20 +11,22 @@ import (
 )
 
 type Job struct {
-	log models.LogType
+	Log models.LogType
 }
 
 type WorkerPool struct {
 	maxWorkers int
 	jobQueue   chan Job
 	wg         sync.WaitGroup
+	db *sql.DB
 }
 
-func NewWorkerPool(maxWorkers, queueSize int) *WorkerPool {
+func NewWorkerPool(db *sql.DB, maxWorkers, queueSize int) *WorkerPool {
 	jobQueue := make(chan Job, queueSize)
 	workerPool := &WorkerPool{
 		maxWorkers: maxWorkers,
 		jobQueue:   jobQueue,
+		db: db,
 	}
 
 	return workerPool
@@ -37,7 +40,7 @@ func (pool *WorkerPool) Start() {
 			defer pool.wg.Done()
 			fmt.Printf("Worker started %d", workId)
 			for job := range pool.jobQueue {
-				processLog(workId, job.log)
+				processLog(workId, job.Log)
 			}
 			fmt.Printf("worker done", workId)
 		}(i + 1)

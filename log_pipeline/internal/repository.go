@@ -2,9 +2,14 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/ochadipa/log_pipeline/models"
+	"github.com/ochadipa/log_pipeline/processor"
+	"github.com/ochadipa/log_pipeline/proto/pb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 
@@ -16,24 +21,47 @@ var (
 )
 
 type LogRepository interface {
-	Close()
-	StreamLogs(ctx context.Context) error
+	StreamLogs(ctx context.Context,log *pb.LogRequest) (*pb.LogResponse,error)
 }
 
 type logRepository struct {
-	db *sql.DB
+	pool *processor.WorkerPool
 }
 
-func NewRepository(db *sql.DB) LogRepository {
-	return &logRepository{db}
+func NewRepository( workerPool *processor.WorkerPool) LogRepository {
+	return &logRepository{workerPool}
 }
 
 
-func (r *logRepository) StreamLogs(ctx context.Context) error {
+func (r *logRepository) StreamLogs(ctx context.Context, log *pb.LogRequest) (*pb.LogResponse, error) {
 	fmt.Println("StreamLogs running")
-	return nil
-}
+	logEntry := &models.LogType{
+		Service: log.GetServiceName(),
+		Timestamp: log.GetTimestamp().AsTime(),
+		Level: log.GetLevel(),
+		Message: log.GetMessage(),
+		Metadata: map[string]interface{}{
+			"dummy":"dummy",
+		},
+	}
 
-func (r *logRepository) Close() {
-	r.db.Close()
+	job := processor.Job{
+		Log: *logEntry,
+	}
+
+	err := r.pool.Submit(ctx, job)
+
+	if err != nil {
+		switch err {
+			case context.DeadlineExceeded :
+				return nil, status.Error(codes.DeadlineExceeded, "request timed out, server might be busy")
+			case context.Canceled :
+				return nil, status.Error(codes.Canceled, "request canceled")
+			default :
+				return nil, status.Errorf(codes.ResourceExhausted, "server is overloaded, please try again later: %v", err)
+
+		}
+	}
+
+	return &pb.LogResponse{ Success: true}, nil
 }
