@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ochadipa/goroutine-practice/models"
+	"github.com/ochadipa/log_pipeline/models"
 )
 
 /**

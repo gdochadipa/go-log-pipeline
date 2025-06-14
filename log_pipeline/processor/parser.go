@@ -3,7 +3,7 @@ package processor
 import (
 	"context"
 
-	"github.com/ochadipa/goroutine-practice/models"
+	"github.com/ochadipa/log_pipeline/models"
 )
 
 
