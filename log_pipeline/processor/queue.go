@@ -19,6 +19,7 @@ func NewLogQueue(bufferSize int) *LogQueue {
 		queueData: make(chan models.LogType, bufferSize),
 	}
 
+
 	// add waiting on wait group
 	lq.wg.Add(1)
 	// run Worker function in go

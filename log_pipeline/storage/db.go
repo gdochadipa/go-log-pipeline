@@ -11,7 +11,7 @@ import (
 
 func NewPostgressConnection(user *string, password *string, host *string, dbName *string) (*sql.DB, error) {
 
-	connStr := fmt.Sprintf("user='%s' password=%s host=%s dbname='%s'", user,  password, host, dbName)
+	connStr := fmt.Sprintf("user='%s' password=%s host=%s dbname='%s'", *user,  *password, *host, *dbName)
 
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  log_pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Map host port 8080 to container port 8080
+      - "50051:50051" # Expose gRPC port
+    volumes:
+      - .:/app # Mount your local Go project directory into the container
+    depends_on:
+      - postgres_db
+    environment:
+      # These environment variables will be accessible within your Go application
+      # Make sure your Go app reads these to connect to the database
+      POSTGRES_HOST: postgres_db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: logpipeline
+    networks:
+      - my_network
+
+  postgres_db:
+    image: postgres:16-alpine # Using a lightweight Alpine-based PostgreSQL image
+    environment:
+      POSTGRES_DB: logpipeline
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432" # Optional: Map host port 5432 to container port 5432 for direct access (e.g., from a GUI client)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./setup_migration.sql:/docker-entrypoint-initdb.d/setup_migration.sql
+    networks:
+      - my_network
+
+volumes:
+  postgres_data:
+
+networks:
+  my_network:
+    driver: bridge

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/ochadipa/log_pipeline/internal"
 	"github.com/ochadipa/log_pipeline/processor"
@@ -13,10 +14,10 @@ func main() {
 
 	var repo internal.LogRepository
 
-	user := "user"
-	password := "password"
-	host := "host"
-	dbName := "dbName"
+	user := os.Getenv("POSTGRES_USER")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	host := os.Getenv("POSTGRES_HOST")
+	dbName := os.Getenv("POSTGRES_DB")
 
 	db, err := storage.NewPostgressConnection(&user, &password, &host, &dbName)
 
@@ -29,11 +30,9 @@ func main() {
 	repo = internal.NewRepository(workerPool)
 	defer db.Close()
 
-	log.Println("Listening on port 8080...")
+	log.Println("Listening on port 50051...")
 
 	service := internal.NewLogService(repo)
 
-	log.Fatal(internal.ListenGRPC(service,8080))
-
-
+	log.Fatal(internal.ListenGRPC(service, 50051))
 }
