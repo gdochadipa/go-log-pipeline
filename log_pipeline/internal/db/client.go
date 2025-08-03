@@ -1,7 +1,6 @@
-package storage
+package db
 
 import (
-	"database/sql"
 	"fmt"
 
 	"gorm.io/driver/postgres"
@@ -9,7 +8,7 @@ import (
 )
 
 
-func NewPostgressConnection(user *string, password *string, host *string, dbName *string) (*sql.DB, error) {
+func NewPostgressConnection(user *string, password *string, host *string, dbName *string) (*gorm.DB, error) {
 
 	connStr := fmt.Sprintf("user='%s' password=%s host=%s dbname='%s'", *user,  *password, *host, *dbName)
 
@@ -27,5 +26,13 @@ func NewPostgressConnection(user *string, password *string, host *string, dbName
 	}
 
 	fmt.Println("Successfully connected")
-	return sqlDB, nil
+	return db, nil
+}
+
+type DB struct {
+	*gorm.DB
+}
+
+func NewDB(db *gorm.DB) *DB {
+return &DB{db}
 }

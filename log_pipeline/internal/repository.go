@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/ochadipa/log_pipeline/models"
 	"github.com/ochadipa/log_pipeline/processor"
 	"github.com/ochadipa/log_pipeline/proto/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
-
 
 var (
 	ErrDuplicate    = errors.New("record already exists")
@@ -21,27 +20,28 @@ var (
 )
 
 type LogRepository interface {
-	StreamLogs(ctx context.Context,log *pb.LogRequest) (*pb.LogResponse,error)
+	SubmitLogs(ctx context.Context, log *pb.LogRequest) (*pb.LogResponse, error)
 }
 
 type logRepository struct {
 	pool *processor.WorkerPool
+	ctx  context.Context
+	db   *gorm.DB
 }
 
-func NewRepository( workerPool *processor.WorkerPool) LogRepository {
-	return &logRepository{workerPool}
+func NewRepository(ctx context.Context, workerPool *processor.WorkerPool) LogRepository {
+	return &logRepository{ctx: ctx, pool: workerPool}
 }
 
-
-func (r *logRepository) StreamLogs(ctx context.Context, log *pb.LogRequest) (*pb.LogResponse, error) {
+func (r *logRepository) SubmitLogs(ctx context.Context, log *pb.LogRequest) (*pb.LogResponse, error) {
 	fmt.Println("StreamLogs running")
 	logEntry := &models.LogType{
-		Service: log.GetServiceName(),
+		Service:   log.GetServiceName(),
 		Timestamp: log.GetTimestamp().AsTime(),
-		Level: log.GetLevel(),
-		Message: log.GetMessage(),
+		Level:     log.GetLevel(),
+		Message:   log.GetMessage(),
 		Metadata: map[string]interface{}{
-			"dummy":"dummy",
+			"dummy": "dummy",
 		},
 	}
 
@@ -53,15 +53,15 @@ func (r *logRepository) StreamLogs(ctx context.Context, log *pb.LogRequest) (*pb
 
 	if err != nil {
 		switch err {
-			case context.DeadlineExceeded :
-				return nil, status.Error(codes.DeadlineExceeded, "request timed out, server might be busy")
-			case context.Canceled :
-				return nil, status.Error(codes.Canceled, "request canceled")
-			default :
-				return nil, status.Errorf(codes.ResourceExhausted, "server is overloaded, please try again later: %v", err)
+		case context.DeadlineExceeded:
+			return nil, status.Error(codes.DeadlineExceeded, "request timed out, server might be busy")
+		case context.Canceled:
+			return nil, status.Error(codes.Canceled, "request canceled")
+		default:
+			return nil, status.Errorf(codes.ResourceExhausted, "server is overloaded, please try again later: %v", err)
 
 		}
 	}
 
-	return &pb.LogResponse{ Success: true}, nil
+	return &pb.LogResponse{Success: true}, nil
 }
