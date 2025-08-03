@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ochadipa/goroutine-practice/models"
-	"github.com/ochadipa/goroutine-practice/processor"
-	"github.com/ochadipa/goroutine-practice/producer"
+	"github.com/ochadipa/log_pipeline/models"
+	"github.com/ochadipa/log_pipeline/processor"
+	"github.com/ochadipa/log_pipeline/producer"
 )
 
 
-func main() {
+func example_main() {
 
 runtime.GOMAXPROCS(4)
 

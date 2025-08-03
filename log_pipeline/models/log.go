@@ -22,3 +22,11 @@ type ErrorLog struct {
     Error error
     Time    time.Time
 }
+
+type LogType struct {
+	Service string 				 `json:"service"`
+	Timestamp time.Time              `json:"timestamp"`
+	Level     string                 `json:"level"`
+	Message   string                 `json:"message"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
